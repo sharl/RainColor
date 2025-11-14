@@ -12,6 +12,7 @@ import time
 import webbrowser
 
 from PIL import Image, ImageDraw
+from SwitchBot import SwitchBot
 from bs4 import BeautifulSoup
 from pystray import Icon, Menu, MenuItem
 from vvox import vvox
@@ -160,7 +161,7 @@ class taskTray:
             r, g, b = self.getRGB(self.config[name])
             rgb = f'{r} {g} {b}'
 
-            # bulbs operation
+            # bulbs operation (Yeelight)
             if self.config[name].get('bulb') or self.config[name].get('broadcast'):
                 try:
                     if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
@@ -173,6 +174,24 @@ class taskTray:
                             bulb.turn_on()
                             bulb.set_rgb(r, g, b)
                             bulb.set_brightness(1)
+                except Exception as e:
+                    logger.warning(e)
+
+            # bulbs operation (SwitchBot)
+            deviceIDs = self.config[name].get('sb_device_id', '').split()
+            if deviceIDs:
+                try:
+                    sb = SwitchBot()
+                    if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
+                        for deviceID in deviceIDs:
+                            sb.post_command(deviceID, 'turnOff')
+                        self.draw.rectangle((0, 0, 31, 31), fill=BLACK, outline=WHITE if rgb == self.config[name]['rgb'] else RED)
+                    else:
+                        self.draw.rectangle((0, 0, 31, 31), fill=(r, g, b), outline=WHITE)
+                        for deviceID in deviceIDs:
+                            sb.post_command(deviceID, 'setBrightness', 1)
+                            sb.post_command(deviceID, 'setColor', f'{r}:{g}:{b}')
+                            sb.post_command(deviceID, 'turnOn')
                 except Exception as e:
                     logger.warning(e)
 

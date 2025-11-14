@@ -9,6 +9,7 @@ Yahoo 雨雲レーダー画像を取得して降水量の色をタスクトレ�
 オプションとして
 
 - 降水量の色を Yeelight の RGB デバイスに反映
+- 降水量の色を SwitchBot の RGB デバイスに反映
 - VOICEVOX でお知らせ
 - Slack の incoming hook gateway にメッセージを送信
 
@@ -31,6 +32,7 @@ location = https://weather.yahoo.co.jp/weather/zoomradar/?lat=42.923&lon=143.193
 rgb = 241 241 239
 # bulb = 192.168.0.204 192.168.0.220
 # broadcast = 192.168.0.255
+# sb_device_id = XXXXXXXXXXXX YYYYYYYYYYYY
 # vvox = off
 # vvox_host = localhost
 # vvox_port = 50021
@@ -72,6 +74,10 @@ Yeelight RGB デバイスの IP アドレス 空白区切りで複数指定可�
 ### broadcast
 
 対象ネットワークのすべての Yeelight RGB デバイスを使用
+
+### sb_device_id
+
+SwichBot RGB デバイスの ID です 空白区切りで複数指定可能
 
 ### vvox
 
