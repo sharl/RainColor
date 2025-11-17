@@ -158,7 +158,7 @@ class taskTray:
             if not self.config[name].get('code'):
                 return
 
-            r, g, b = self.getRGB(self.config[name])
+            r, g, b = self.getRGB(name, self.config[name])
             rgb = f'{r} {g} {b}'
 
             # bulbs operation (Yeelight)
@@ -241,7 +241,8 @@ class taskTray:
     def doOpen(self, _, item):
         name = str(item)
         base = self.config[name]['location'].split('?')
-        url = f'{base[0]}{"rainsnow/" if self.rainsnow else ""}?{base[1]}'
+        rainsnow = self.config[name].get('rainsnow', False)
+        url = f'{base[0]}{"rainsnow/" if rainsnow else ""}?{base[1]}'
         webbrowser.open(url)
 
     def stopApp(self):
@@ -263,7 +264,7 @@ class taskTray:
 
         self.app.run()
 
-    def getRGB(self, data):
+    def getRGB(self, name, data):
         # print('getRGB', data)
         code = data['code']
         rainsnow = False
@@ -282,6 +283,7 @@ class taskTray:
                 self.rainsnow |= True
                 rainsnow = True
 
+        self.config[name]['rainsnow'] = rainsnow
         base_url = f'{base[0]}{"rainsnow/" if rainsnow else ""}?{base[1]}'
         with requests.get(base_url, timeout=10) as r:
             soup = BeautifulSoup(r.content, 'html.parser')
