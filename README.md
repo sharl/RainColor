@@ -21,7 +21,7 @@ Yahoo 雨雲レーダー画像を取得して降水量の色をタスクトレ�
 git clone https://github.com/sharl/RainColor.git
 cd RainColor
 pip install -r requirements.txt
-python Yeelight-RainColor.py
+python RainColor.py
 ```
 
 ## .config 書式
