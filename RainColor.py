@@ -93,7 +93,6 @@ class taskTray:
         self.running = False
         self.config = {}
         self.bulbs = []
-        self.rainsnow = False
 
         self.readConf(False)
 
@@ -106,8 +105,6 @@ class taskTray:
 
     def buildMenu(self):
         item = [
-            MenuItem('Snow?', lambda _: False, checked=lambda _: self.rainsnow),
-            Menu.SEPARATOR,
             MenuItem('Reload', self.readConf),
             Menu.SEPARATOR,
         ]
@@ -280,7 +277,6 @@ class taskTray:
             cm, aqc = data[base_key].get('snow', [None, None])
             # 0: 正常 1: 准正常
             if cm is not None and (aqc != 0 or aqc != 1):
-                self.rainsnow |= True
                 rainsnow = True
 
         self.config[name]['rainsnow'] = rainsnow
