@@ -279,7 +279,8 @@ class taskTray:
             cm, aqc = data[base_key].get('snow', [None, None])
             # 0: 正常 1: 准正常
             if cm is not None and (aqc != 0 or aqc != 1):
-                self.rainsnow = rainsnow = True
+                self.rainsnow |= True
+                rainsnow = True
 
         base_url = f'{base[0]}{"rainsnow/" if rainsnow else ""}?{base[1]}'
         with requests.get(base_url, timeout=10) as r:
