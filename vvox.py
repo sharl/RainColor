@@ -33,9 +33,9 @@ def vvox(text, host='127.0.0.1', port=50021, speaker=3, speed=1.0, volume=1.0):
 
         pya = pyaudio.PyAudio()
         stream = pya.open(
-            format=pyaudio.paInt16,         # 16bit
-            channels=1,                     # モノラル
-            rate=qp['outputSamplingRate'],
+            format=pya.get_format_from_width(wf.getsampwidth()),
+            channels=wf.getnchannels(),
+            rate=wf.getframerate(),
             output=True,
         )
         stream.write(data)
