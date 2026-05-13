@@ -43,7 +43,7 @@ logging.basicConfig(
         logging.handlers.RotatingFileHandler("log.log", encoding='utf-8', maxBytes=1000000, backupCount=0),
         logging.StreamHandler(),
     ],
-    datefmt='%x %X'
+    datefmt='%Y/%m/%d %X'
 )
 logger = logging.getLogger(NAME)
 logger.setLevel(logging.DEBUG)
@@ -271,26 +271,36 @@ class taskTray:
         HH = now.strftime('%H')
         hh = f'{int(HH) // 3 * 3:02d}'
         url = f'https://www.jma.go.jp/bosai/amedas/data/point/{code}/{yyyymmdd}_{hh}.json'
-        with requests.get(url, timeout=10) as r:
-            data = r.json()
-            base_key = f'{yyyymmdd}{HH}0000'        # 積雪は1時間毎    pass
-            cm, aqc = data[base_key].get('snow', [None, None])
-            # 0: 正常 1: 准正常
-            if cm is not None and (aqc != 0 or aqc != 1):
-                rainsnow = True
+        try:
+            with requests.get(url, timeout=10) as r:
+                data = r.json()
+                base_key = f'{yyyymmdd}{HH}0000'        # 積雪は1時間毎    pass
+                cm, aqc = data[base_key].get('snow', [None, None])
+                # 0: 正常 1: 准正常
+                if cm is not None and (aqc != 0 or aqc != 1):
+                    rainsnow = True
+        except Exception as :
+            logger.warning(e)
 
         self.config[name]['rainsnow'] = rainsnow
         base_url = f'{base[0]}{"rainsnow/" if rainsnow else ""}?{base[1]}'
-        with requests.get(base_url, timeout=10) as r:
-            soup = BeautifulSoup(r.content, 'html.parser')
-            og_image = soup.find('meta', property='og:image')
-            if not og_image:
-                return BLACK
-            img_url = og_image.get('content').replace('1200x630', '1x1')
+        try:
+            with requests.get(base_url, timeout=10) as r:
+                soup = BeautifulSoup(r.content, 'html.parser')
+                og_image = soup.find('meta', property='og:image')
+                if not og_image:
+                    return BLACK
+                img_url = og_image.get('content').replace('1200x630', '1x1')
 
-            with requests.get(img_url, timeout=10) as r:
-                image = Image.open(io.BytesIO(r.content)).convert('RGB')
-                return image.getpixel((0, 0))
+                with requests.get(img_url, timeout=10) as r:
+                    try:
+                        image = Image.open(io.BytesIO(r.content)).convert('RGB')
+                    except Exception as e:
+                        print('Exception', e)
+                        return BLACK
+                    return image.getpixel((0, 0))
+        except Exception as e:
+            logger.warning(e)
 
         return BLACK
 
