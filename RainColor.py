@@ -279,7 +279,7 @@ class taskTray:
                 # 0: 正常 1: 准正常
                 if cm is not None and (aqc != 0 or aqc != 1):
                     rainsnow = True
-        except Exception as :
+        except Exception as e:
             logger.warning(e)
 
         self.config[name]['rainsnow'] = rainsnow
