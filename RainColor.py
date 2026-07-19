@@ -105,6 +105,7 @@ class taskTray:
 
     def buildMenu(self):
         item = [
+            MenuItem('do it', self.doIt, visible=False, default=True),
             MenuItem('Reload', self.readConf),
             Menu.SEPARATOR,
         ]
@@ -235,12 +236,20 @@ class taskTray:
         self.app.icon = self.image
         self.app.update_menu()
 
-    def doOpen(self, _, item):
-        name = str(item)
+    def _openURL(self, name: str):
         base = self.config[name]['location'].split('?')
         rainsnow = self.config[name].get('rainsnow', False)
         url = f'{base[0]}{"rainsnow/" if rainsnow else ""}?{base[1]}'
         webbrowser.open(url)
+
+    def doIt(self):
+        if len(self.config) == 1:
+            name = list(self.config)[0]
+            self._openURL(name)
+
+    def doOpen(self, _, item):
+        name = str(item)
+        self._openURL(name)
 
     def stopApp(self):
         self.running = False
