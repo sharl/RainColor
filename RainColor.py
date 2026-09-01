@@ -97,33 +97,31 @@ logging.basicConfig(
 logger = logging.getLogger(NAME)
 logger.setLevel(logging.DEBUG)
 
-amedastable = {}
-with requests.get('https://www.jma.go.jp/bosai/amedas/const/amedastable.json', timeout=10) as r:
-    amedastable = r.json()
-
 
 def deg2dec(deg):
     degree, minute = deg
     return degree + minute / 60
 
 
-def getNearAmedas(lat, lng):
-    if amedastable:
-        lines = []
-        data = amedastable
-        for key in data:
-            name = data[key]['kjName']
-            elem = data[key]['elems']
-            _lat = deg2dec(data[key]['lat'])
-            _lng = deg2dec(data[key]['lon'])
-            dist = math.dist((lat, lng), (_lat, _lng))
-            # snow
-            if elem[5] == '1':
-                lines.append([key, name, dist])
+def getNearAmedas(lat, lng, amedastable={}):
+    if not amedastable:
+        AMEDASTABLE_URL = 'https://www.jma.go.jp/bosai/amedas/const/amedastable.json'
+        with requests.get(AMEDASTABLE_URL, timeout=10) as r:
+            amedastable.update(r.json())
 
-        return sorted(lines, key=lambda x: x[2])[0]
+    lines = []
+    data = amedastable
+    for key in data:
+        name = data[key]['kjName']
+        elem = data[key]['elems']
+        _lat = deg2dec(data[key]['lat'])
+        _lng = deg2dec(data[key]['lon'])
+        dist = math.dist((lat, lng), (_lat, _lng))
+        # snow
+        if elem[5] == '1':
+            lines.append([key, name, dist])
 
-    return []
+    return sorted(lines, key=lambda x: x[2])[0]
 
 
 def get_interface_name(addr):
