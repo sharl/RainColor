@@ -303,23 +303,6 @@ class taskTray:
         name = str(item)
         self._openURL(name)
 
-    def stopApp(self):
-        self.stop_event.set()
-        self.app.stop()
-
-    def runSchedule(self):
-        schedule.every(INTERVAL).seconds.do(self.doTask)
-
-        while not self.stop_event.is_set():
-            schedule.run_pending()
-            if self.stop_event.wait(1):
-                break
-
-    def runApp(self):
-        self.stop_event.clear()
-        threading.Thread(target=self.runSchedule).start()
-        self.app.run()
-
     def daytime(self, speaker):
         now = dt.datetime.now(dt.timezone(dt.timedelta(hours=9)))
         if now.hour <= 5:
@@ -458,6 +441,23 @@ class taskTray:
             logger.warning(e)
 
         return BLACK
+
+    def stopApp(self):
+        self.stop_event.set()
+        self.app.stop()
+
+    def runSchedule(self):
+        schedule.every(INTERVAL).seconds.do(self.doTask)
+
+        while not self.stop_event.is_set():
+            schedule.run_pending()
+            if self.stop_event.wait(1):
+                break
+
+    def runApp(self):
+        self.stop_event.clear()
+        threading.Thread(target=self.runSchedule).start()
+        self.app.run()
 
 
 if __name__ == '__main__':
