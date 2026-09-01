@@ -283,7 +283,8 @@ class taskTray:
 
                 logger.debug(f"{self.config[name]['rgb']} {rgb} {not notified} {post_data}")
 
-            lines.append(f'{name}: {"ok" if self.config[name]['rgb'] == rgb else rgb}')
+            if self.config[name]['rgb'] != rgb:
+                lines.append(rgb)
 
         self.app.menu = self.buildMenu()
         self.app.title = '\n'.join(lines)
