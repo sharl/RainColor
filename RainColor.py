@@ -326,15 +326,17 @@ class taskTray:
             return
 
         _name = '' if self.config[name].get('code') == self.default else f'{name}が'
+        snow = self.config[name].get('snow')
         _plus = '増えた' if plus else 'なった'
-        vvox(f'{_name}{self.snow}センチに{_plus}わ', speaker=self.daytime(四国めたん))
+        vvox(f'{_name}{snow}センチに{_plus}わ', speaker=self.daytime(四国めたん))
 
     def vvox_weather(self, name):
         if self.config[name].get('vvox', '').lower() != 'on':
             return
 
         _name = '' if self.config[name].get('code') == self.default else f'{self.name}は'
-        vvox(f'{_name}{self.config[name].get('weather', '不明')}なのだ', speaker=self.daytime(ずんだもん))
+        weather = self.config[name].get('weather')
+        vvox(f'{_name}{weather}なのだ', speaker=self.daytime(ずんだもん))
 
     def getRGB(self, name):
         # print('getRGB', self.config[name])
