@@ -8,7 +8,6 @@ import logging.handlers
 import math
 import os
 import threading
-import time
 import webbrowser
 
 from PIL import Image, ImageDraw
@@ -137,7 +136,7 @@ def get_interface_name(addr):
 
 class taskTray:
     def __init__(self):
-        self.running = False
+        self.stop_event = threading.Event()
         self.config = {}
         self.bulbs = []
 
@@ -305,22 +304,20 @@ class taskTray:
         self._openURL(name)
 
     def stopApp(self):
-        self.running = False
+        self.stop_event.set()
         self.app.stop()
 
     def runSchedule(self):
         schedule.every(INTERVAL).seconds.do(self.doTask)
 
-        while self.running:
+        while not self.stop_event.is_set():
             schedule.run_pending()
-            time.sleep(1)
+            if self.stop_event.wait(1):
+                break
 
     def runApp(self):
-        self.running = True
-
-        task_thread = threading.Thread(target=self.runSchedule)
-        task_thread.start()
-
+        self.stop_event.clear()
+        threading.Thread(target=self.runSchedule).start()
         self.app.run()
 
     def daytime(self, speaker):
