@@ -332,7 +332,7 @@ class taskTray:
         return speaker[0]
 
     def vvox_temp(self, name):
-        if self.config[name].get('vvox').lower() != 'on':
+        if self.config[name].get('vvox', '').lower() != 'on':
             return
 
         _name = '' if self.config[name].get('code') == self.default else f'{name}が'
@@ -344,7 +344,7 @@ class taskTray:
         vvox(f"{_name}{pm}{str(temp).replace('.0', '')}度になったのだ", speaker=self.daytime(ずんだもん))
 
     def vvox_snow(self, name, plus):
-        if self.config[name].get('vvox').lower() != 'on':
+        if self.config[name].get('vvox', '').lower() != 'on':
             return
 
         _name = '' if self.config[name].get('code') == self.default else f'{name}が'
@@ -352,7 +352,7 @@ class taskTray:
         vvox(f'{_name}{self.snow}センチに{_plus}わ', speaker=self.daytime(四国めたん))
 
     def vvox_weather(self, name):
-        if self.config[name].get('vvox').lower() != 'on':
+        if self.config[name].get('vvox', '').lower() != 'on':
             return
 
         _name = '' if self.config[name].get('code') == self.default else f'{self.name}は'
