@@ -509,7 +509,7 @@ class taskTray:
                     try:
                         image = Image.open(io.BytesIO(r.content)).convert('RGB')
                     except Exception as e:
-                        print('Exception', e)
+                        logger.debug(f'Exception: map image {e}')
                         return BLACK
                     return image.getpixel((0, 0))
         except Exception as e:
