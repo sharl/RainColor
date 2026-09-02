@@ -207,262 +207,6 @@ class taskTray:
         if task:
             self.doTask()
 
-    def doTask(self):
-        lines = []
-        for name in self.config:
-            if not self.config[name].get('code'):
-                return
-
-            r, g, b = self.getRGB(name)
-            rgb = f'{r} {g} {b}'
-            lines += self.config[name].get('lines', [])
-            if self.config[name].get('code') == self.default:
-                weather = self.config[name].get('weather')
-                temp = self.config[name].get('temp')
-                snow = self.config[name].get('snow')
-                print(weather, temp, snow)
-                images = self.getImages(weather, temp, snow)
-                self.badges.set_visible(self.show_badges)
-                self.badges.update(images)
-
-            # bulbs operation (Yeelight)
-            if self.config[name].get('bulb') or self.config[name].get('broadcast'):
-                try:
-                    if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
-                        for bulb in self.bulbs:
-                            bulb.turn_off()
-                        self.draw.rectangle((0, 0, 31, 31), fill=BLACK, outline=WHITE if rgb == self.config[name]['rgb'] else RED)
-                    else:
-                        self.draw.rectangle((0, 0, 31, 31), fill=(r, g, b), outline=WHITE)
-                        for bulb in self.bulbs:
-                            bulb.turn_on()
-                            bulb.set_rgb(r, g, b)
-                            bulb.set_brightness(1)
-                except Exception as e:
-                    logger.warning(e)
-
-            # bulbs operation (SwitchBot)
-            deviceIDs = self.config[name].get('sb_device_id', '').split()
-            if deviceIDs:
-                try:
-                    sb = SwitchBot()
-                    if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
-                        for deviceID in deviceIDs:
-                            sb.post_command(deviceID, 'turnOff')
-                        self.draw.rectangle((0, 0, 31, 31), fill=BLACK, outline=WHITE if rgb == self.config[name]['rgb'] else RED)
-                    else:
-                        self.draw.rectangle((0, 0, 31, 31), fill=(r, g, b), outline=WHITE)
-                        for deviceID in deviceIDs:
-                            sb.post_command(deviceID, 'setBrightness', 1)
-                            sb.post_command(deviceID, 'setColor', f'{r}:{g}:{b}')
-                            sb.post_command(deviceID, 'turnOn')
-                except Exception as e:
-                    logger.warning(e)
-
-            # compose notification message with condition
-            post_data = {}
-            channel = self.config[name].get('channel')
-            post_url = self.config[name].get('post')
-            notified = self.config[name]['notified']
-
-            if not notified and (self.config[name]['rgb'] != rgb):
-                # 通知しておらずデフォルトカラーと異なる (つまり降り始めた)
-                line = self.config[name].get('format_falling', 'さんの家、降り始めたみたいです')
-                post_data['text'] = name + line
-                # 通知済みにする
-                self.config[name]['notified'] = True
-            elif notified and (self.config[name]['rgb'] == rgb):
-                # 通知済みでデフォルトカラーと一致 (つまり止んだ)
-                line = self.config[name].get('format_clear', 'さんの家、止んだみたいです')
-                post_data['text'] = name + line
-                # 通知していない状態に
-                self.config[name]['notified'] = False
-
-            if post_data.get('text'):
-                if channel:
-                    post_data['channel'] = channel
-                if post_url:
-                    requests.post(post_url, json=post_data, timeout=1)
-                if self.config[name].get('vvox', '').lower() == 'on':
-                    host = self.config[name].get('vvox_host', 'localhost')
-                    port = int(self.config[name].get('vvox_port', 50021))
-                    voice = int(self.config[name].get('vvox_voice', 3))
-                    speed = float(self.config[name].get('vvox_speed', 1.2))
-                    try:
-                        vvox(post_data['text'], host=host, port=port, speaker=voice, speed=speed)
-                    except Exception as e:
-                        logger.warning(e)
-
-                logger.debug(f"{self.config[name]['rgb']} {rgb} {not notified} {post_data}")
-
-            if self.config[name]['rgb'] != rgb:
-                lines.append(rgb)
-
-        self.app.menu = self.buildMenu()
-        self.app.title = '\n'.join(lines)
-        self.app.icon = self.image
-        self.app.update_menu()
-
-    def _openURL(self, name: str):
-        base = self.config[name]['location'].split('?')
-        rainsnow = self.config[name].get('rainsnow', False)
-        url = f'{base[0]}{"rainsnow/" if rainsnow else ""}?{base[1]}'
-        webbrowser.open(url)
-
-    def doIt(self):
-        if len(self.config) == 1:
-            name = list(self.config)[0]
-            self._openURL(name)
-
-    def doOpen(self, _, item):
-        name = str(item)
-        self._openURL(name)
-
-    def toggleBadges(self, _, __):
-        self.show_badges = not self.show_badges
-        self.badges.set_visible(self.show_badges)
-
-    def daytime(self, speaker):
-        now = dt.datetime.now(dt.timezone(dt.timedelta(hours=9)))
-        if now.hour <= 5:
-            return speaker[1]
-        return speaker[0]
-
-    def vvox_temp(self, name):
-        if self.config[name].get('vvox', '').lower() != 'on':
-            return
-
-        _name = '' if self.config[name].get('code') == self.default else f'{name}が'
-        temp = self.config[name].get('temp')
-        pm = ''
-        if temp < 0:
-            temp = -temp
-            pm = 'マイナス'
-        vvox(f"{_name}{pm}{str(temp).replace('.0', '')}度になったのだ", speaker=self.daytime(ずんだもん))
-
-    def vvox_snow(self, name, plus):
-        if self.config[name].get('vvox', '').lower() != 'on':
-            return
-
-        _name = '' if self.config[name].get('code') == self.default else f'{name}が'
-        snow = self.config[name].get('snow')
-        _plus = '増えた' if plus else 'なった'
-        vvox(f'{_name}{snow}センチに{_plus}わ', speaker=self.daytime(四国めたん))
-
-    def vvox_weather(self, name):
-        if self.config[name].get('vvox', '').lower() != 'on':
-            return
-
-        _name = '' if self.config[name].get('code') == self.default else f'{self.name}は'
-        weather = self.config[name].get('weather')
-        vvox(f'{_name}{weather}なのだ', speaker=self.daytime(ずんだもん))
-
-    def getRGB(self, name):
-        # print('getRGB', self.config[name])
-        code = self.config[name]['code']
-        rainsnow = False
-        base = self.config[name]['location'].split('?')
-        now = dt.datetime.now(dt.timezone(dt.timedelta(hours=9))) - dt.timedelta(minutes=10)
-        yyyymmdd = now.strftime('%Y%m%d')
-        HH = now.strftime('%H')
-        hh = f'{int(HH) // 3 * 3:02d}'
-        url = f'https://www.jma.go.jp/bosai/amedas/data/point/{code}/{yyyymmdd}_{hh}.json'
-        try:
-            with requests.get(url, timeout=10) as r:
-                data = r.json()
-                base_key = f'{yyyymmdd}{HH}0000'        # 積雪は1時間毎    pass
-                last_key = list(data.keys())[-1]
-                _vars = data[base_key]
-                for k in data[last_key]:
-                    _vars[k] = data[last_key][k]
-                cm, aqc = data[base_key].get('snow', [None, None])
-                # 0: 正常 1: 准正常
-                if cm is not None and (aqc != 0 or aqc != 1):
-                    rainsnow = True
-                h = last_key[8:10]
-                if h == '00':
-                    h = '24'
-                m = last_key[10:12]
-                lines = [
-                    f'{name} {h}:{m}',
-                ]
-                weather = None
-                temp = D_TEMP
-                snow = D_SNOW
-                for x in [
-                        '天気 weather -',
-                        '気温 temp 度',
-                        '降水 precipitation1h mm/h',
-                        '風向 windDirection -',
-                        '風速 wind m/s',
-                        '積雪 snow cm',
-                        '降雪 snow1h cm/h',
-                        '湿度 humidity %',
-                        '気圧 pressure hPa',
-                ]:
-                    t, k, u = x.split()
-                    if k in _vars:
-                        v, aqc = _vars[k]
-                        # print(k, [v, aqc])
-                        # 0: 正常 1: 准正常
-                        if aqc != 0 and aqc != 1:
-                            continue
-
-                        if isinstance(v, float):
-                            if v == int(v):
-                                v = int(v)
-
-                        if k == 'weather':
-                            weather = WEATHER_INFO[v]
-                            if weather != self.config[name].get('weather'):
-                                self.config[name]['weather'] = weather
-                                self.vvox_weather(name)
-                        elif k == 'temp':
-                            temp = v
-                            if int(temp) != int(self.config[name].get('temp', D_TEMP)):
-                                self.config[name]['temp'] = temp
-                                self.vvox_temp(name)
-                        elif k == 'snow':
-                            snow = v
-                            if snow is not None and snow != self.config[name].get('snow'):
-                                plus = snow > self.config[name].get('snow') and self.config[name].get('snow') != D_SNOW
-                                self.config[name]['snow'] = snow
-                                self.vvox_snow(name, plus)
-
-                        if k == 'windDirection':
-                            lines.append(f'{t} {WD[v]}')
-                        elif k == 'weather':
-                            lines.append(f'{t} {WEATHER_INFO[v]}')
-                        else:
-                            lines.append(f'{t} {v}{u}')
-                self.config[name]['lines'] = lines
-        except Exception as e:
-            logger.warning(e)
-        finally:
-            pass
-
-        self.config[name]['rainsnow'] = rainsnow
-        base_url = f'{base[0]}{"rainsnow/" if rainsnow else ""}?{base[1]}'
-        try:
-            with requests.get(base_url, timeout=10) as r:
-                soup = BeautifulSoup(r.content, 'html.parser')
-                og_image = soup.find('meta', property='og:image')
-                if not og_image:
-                    return BLACK
-                img_url = og_image.get('content').replace('1200x630', '1x1')
-
-                with requests.get(img_url, timeout=10) as r:
-                    try:
-                        image = Image.open(io.BytesIO(r.content)).convert('RGB')
-                    except Exception as e:
-                        print('Exception', e)
-                        return BLACK
-                    return image.getpixel((0, 0))
-        except Exception as e:
-            logger.warning(e)
-
-        return BLACK
-
     def getImages(self, w, t, s):
         def create_fitted_text_image(text, font_path=r"C:\Windows\Fonts\arialbd.ttf", target_height=72, padding=16):
             # 1. 適切なフォントサイズを推測（高さ72pxなら、フォントサイズもだいたい72から開始）
@@ -529,6 +273,307 @@ class taskTray:
             images.append(image)
 
         return images
+
+    def daytime(self, speaker):
+        now = dt.datetime.now(dt.timezone(dt.timedelta(hours=9)))
+        if now.hour <= 5:
+            return speaker[1]
+        return speaker[0]
+
+    def vvox_temp(self, name):
+        if self.config[name].get('vvox', '').lower() != 'on':
+            return
+
+        _name = '' if self.config[name].get('code') == self.default else f'{name}が'
+        temp = self.config[name].get('temp')
+        pm = ''
+        if temp < 0:
+            temp = -temp
+            pm = 'マイナス'
+        vvox(f"{_name}{pm}{str(temp).replace('.0', '')}度になったのだ", speaker=self.daytime(ずんだもん))
+
+    def vvox_snow(self, name, plus):
+        if self.config[name].get('vvox', '').lower() != 'on':
+            return
+
+        _name = '' if self.config[name].get('code') == self.default else f'{name}が'
+        snow = self.config[name].get('snow')
+        _plus = '増えた' if plus else 'なった'
+        vvox(f'{_name}{snow}センチに{_plus}わ', speaker=self.daytime(四国めたん))
+
+    def vvox_weather(self, name):
+        if self.config[name].get('vvox', '').lower() != 'on':
+            return
+
+        _name = '' if self.config[name].get('code') == self.default else f'{self.name}は'
+        weather = self.config[name].get('weather')
+        vvox(f'{_name}{weather}なのだ', speaker=self.daytime(ずんだもん))
+
+    def amedas(self, name: str):
+        """
+        sat values
+        - self.config[name]
+          - rainsnow: bool
+          - weather: str
+          - temp: float
+          - snow: int
+          - lines: list[str]
+        """
+        code = self.config[name].get('code')
+        now = dt.datetime.now(dt.timezone(dt.timedelta(hours=9))) - dt.timedelta(minutes=10)
+        yyyymmdd = now.strftime('%Y%m%d')
+        HH = now.strftime('%H')
+        hh = f'{int(HH) // 3 * 3:02d}'
+        url = f'https://www.jma.go.jp/bosai/amedas/data/point/{code}/{yyyymmdd}_{hh}.json'
+        try:
+            with requests.get(url, timeout=10) as r:
+                rainsnow = False
+                weather = None
+                temp = D_TEMP
+                snow = D_SNOW
+
+                # set newest data to _vars
+                data = r.json()
+                base_key = f'{yyyymmdd}{HH}0000'        # 積雪は1時間毎
+                last_key = list(data.keys())[-1]
+                _vars = data[base_key]
+                for k in data[last_key]:
+                    _vars[k] = data[last_key][k]
+
+                # detect rainsnow
+                cm, aqc = data[base_key].get('snow', [None, None])
+                # 0: 正常 1: 准正常
+                if cm is not None and (aqc != 0 or aqc != 1):
+                    rainsnow = True
+                self.config[name]['rainsnow'] = rainsnow
+
+                h = last_key[8:10]
+                if h == '00':
+                    h = '24'
+                m = last_key[10:12]
+                lines = [
+                    f'{name} {h}:{m}',
+                ]
+                for x in [
+                        '天気 weather -',
+                        '気温 temp 度',
+                        '降水 precipitation1h mm/h',
+                        '風向 windDirection -',
+                        '風速 wind m/s',
+                        '積雪 snow cm',
+                        '降雪 snow1h cm/h',
+                        '湿度 humidity %',
+                        '気圧 pressure hPa',
+                ]:
+                    t, k, u = x.split()
+                    if k in _vars:
+                        v, aqc = _vars[k]
+                        # print(k, [v, aqc])
+                        # 0: 正常 1: 准正常
+                        if aqc != 0 and aqc != 1:
+                            continue
+
+                        if isinstance(v, float):
+                            if v == int(v):
+                                v = int(v)
+
+                        if k == 'weather':
+                            weather = WEATHER_INFO[v]
+                            if weather != self.config[name].get('weather'):
+                                self.config[name]['weather'] = weather
+                                self.vvox_weather(name)
+                        elif k == 'temp':
+                            temp = v
+                            if int(temp) != int(self.config[name].get('temp', D_TEMP)):
+                                self.config[name]['temp'] = temp
+                                self.vvox_temp(name)
+                        elif k == 'snow':
+                            snow = v
+                            if snow is not None and snow != self.config[name].get('snow'):
+                                plus = snow > self.config[name].get('snow') and self.config[name].get('snow') != D_SNOW
+                                self.config[name]['snow'] = snow
+                                self.vvox_snow(name, plus)
+
+                        if k == 'windDirection':
+                            lines.append(f'{t} {WD[v]}')
+                        elif k == 'weather':
+                            lines.append(f'{t} {WEATHER_INFO[v]}')
+                        else:
+                            lines.append(f'{t} {v}{u}')
+                self.config[name]['lines'] = lines
+        finally:
+            return rainsnow, weather, temp, snow
+
+    def yeelight(self, name: str, r: int, g: int, b: int):
+        """
+        bulbs operation (Yeelight)
+        """
+        rgb = f'{r} {g} {b}'
+
+        if self.config[name].get('bulb') or self.config[name].get('broadcast'):
+            try:
+                if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
+                    for bulb in self.bulbs:
+                        bulb.turn_off()
+                    self.draw.rectangle((0, 0, 31, 31), fill=BLACK, outline=WHITE if rgb == self.config[name]['rgb'] else RED)
+                else:
+                    self.draw.rectangle((0, 0, 31, 31), fill=(r, g, b), outline=WHITE)
+                    for bulb in self.bulbs:
+                        bulb.turn_on()
+                        bulb.set_rgb(r, g, b)
+                        bulb.set_brightness(1)
+            except Exception as e:
+                logger.warning(e)
+
+    def switchbot(self, name: str, r: int, g: int, b: int):
+        """
+        bulbs operation (SwitchBot)
+        """
+        rgb = f'{r} {g} {b}'
+
+        deviceIDs = self.config[name].get('sb_device_id', '').split()
+        if deviceIDs:
+            try:
+                sb = SwitchBot()
+                if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
+                    for deviceID in deviceIDs:
+                        sb.post_command(deviceID, 'turnOff')
+                    self.draw.rectangle((0, 0, 31, 31), fill=BLACK, outline=WHITE if rgb == self.config[name]['rgb'] else RED)
+                else:
+                    self.draw.rectangle((0, 0, 31, 31), fill=(r, g, b), outline=WHITE)
+                    for deviceID in deviceIDs:
+                        sb.post_command(deviceID, 'setBrightness', 1)
+                        sb.post_command(deviceID, 'setColor', f'{r}:{g}:{b}')
+                        sb.post_command(deviceID, 'turnOn')
+            except Exception as e:
+                logger.warning(e)
+
+    def voicevox(self, name: str, r: int, g: int, b: int):
+        """
+        experimental: post channel
+
+        voicevox operation
+        """
+        rgb = f'{r} {g} {b}'
+
+        # compose notification message with condition
+        post_data = {}
+        channel = self.config[name].get('channel')
+        post_url = self.config[name].get('post')
+        notified = self.config[name]['notified']
+
+        if not notified and (self.config[name]['rgb'] != rgb):
+            # 通知しておらずデフォルトカラーと異なる (つまり降り始めた)
+            line = self.config[name].get('format_falling', 'さんの家、降り始めたみたいです')
+            post_data['text'] = name + line
+            # 通知済みにする
+            self.config[name]['notified'] = True
+        elif notified and (self.config[name]['rgb'] == rgb):
+            # 通知済みでデフォルトカラーと一致 (つまり止んだ)
+            line = self.config[name].get('format_clear', 'さんの家、止んだみたいです')
+            post_data['text'] = name + line
+            # 通知していない状態に
+            self.config[name]['notified'] = False
+
+        if post_data.get('text'):
+            if channel:
+                post_data['channel'] = channel
+            if post_url:
+                requests.post(post_url, json=post_data, timeout=1)
+
+            if self.config[name].get('vvox', '').lower() == 'on':
+                host = self.config[name].get('vvox_host', 'localhost')
+                port = int(self.config[name].get('vvox_port', 50021))
+                voice = int(self.config[name].get('vvox_voice', 3))
+                speed = float(self.config[name].get('vvox_speed', 1.2))
+                try:
+                    vvox(post_data['text'], host=host, port=port, speaker=voice, speed=speed)
+                except Exception as e:
+                    logger.warning(e)
+
+            logger.debug(f"{self.config[name]['rgb']} {rgb} {not notified} {post_data}")
+
+    def getRGB(self, name: str) -> list[int]:
+        rainsnow = self.config[name].get('rainsnow', False)
+        base = self.config[name]['location'].split('?')
+        base_url = f'{base[0]}{"rainsnow/" if rainsnow else ""}?{base[1]}'
+        try:
+            with requests.get(base_url, timeout=10) as r:
+                soup = BeautifulSoup(r.content, 'html.parser')
+                og_image = soup.find('meta', property='og:image')
+                if not og_image:
+                    return BLACK
+                img_url = og_image.get('content').replace('1200x630', '1x1')
+
+                with requests.get(img_url, timeout=10) as r:
+                    try:
+                        image = Image.open(io.BytesIO(r.content)).convert('RGB')
+                    except Exception as e:
+                        print('Exception', e)
+                        return BLACK
+                    return image.getpixel((0, 0))
+        except Exception as e:
+            logger.warning(e)
+
+        return BLACK
+
+    def doTask(self):
+        lines = []
+        for name in self.config:
+            if not self.config[name].get('code'):
+                return
+
+            # get amedas
+            rainsnow, weather, temp, snow = self.amedas(name)
+
+            # get RGB
+            r, g, b = self.getRGB(name)
+            rgb = f'{r} {g} {b}'
+
+            if self.config[name].get('code') == self.default:
+                # set Yeelight
+                self.yeelight(name, r, g, b)
+                # set Switchbot
+                self.switchbot(name, r, g, b)
+
+                # update badge
+                # self.badges[name].updateBadge()
+                images = self.getImages(weather, temp, snow)
+                self.badges.set_visible(self.show_badges)
+                self.badges.update(images)
+
+            # post and voicevox
+            self.voicevox(name, r, g, b)
+
+            lines += self.config[name].get('lines', [])
+            if self.config[name]['rgb'] != rgb:
+                lines.append(rgb)
+
+            print(rainsnow, weather, temp, snow, rgb)
+
+        self.app.menu = self.buildMenu()
+        self.app.title = '\n'.join(lines)
+        self.app.icon = self.image
+        self.app.update_menu()
+
+    def _openURL(self, name: str):
+        base = self.config[name]['location'].split('?')
+        rainsnow = self.config[name].get('rainsnow', False)
+        url = f'{base[0]}{"rainsnow/" if rainsnow else ""}?{base[1]}'
+        webbrowser.open(url)
+
+    def doIt(self):
+        if len(self.config) == 1:
+            name = list(self.config)[0]
+            self._openURL(name)
+
+    def doOpen(self, _, item):
+        name = str(item)
+        self._openURL(name)
+
+    def toggleBadges(self, _, __):
+        self.show_badges = not self.show_badges
+        self.badges.set_visible(self.show_badges)
 
     def stopApp(self):
         self.stop_event.set()
