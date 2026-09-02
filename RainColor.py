@@ -76,6 +76,7 @@ AQC_INFO = {
     6: '✕',
     None: '　',
 }
+AQC_OK = [0, 1]
 ずんだもん = [3, 22]
 四国めたん = [2, 36]
 
@@ -343,7 +344,7 @@ class taskTray:
                 # detect rainsnow
                 cm, aqc = data[base_key].get('snow', [None, None])
                 # 0: 正常 1: 准正常
-                if cm is not None and (aqc != 0 or aqc != 1):
+                if cm is not None and aqc in AQC_OK:
                     rainsnow = True
                 self.config[name]['rainsnow'] = rainsnow
 
@@ -370,7 +371,7 @@ class taskTray:
                         v, aqc = _vars[k]
                         # print(k, [v, aqc])
                         # 0: 正常 1: 准正常
-                        if aqc != 0 and aqc != 1:
+                        if aqc not in AQC_OK:
                             continue
 
                         if isinstance(v, float):
