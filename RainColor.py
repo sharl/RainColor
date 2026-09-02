@@ -10,7 +10,7 @@ import os
 import threading
 import webbrowser
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from SwitchBot import SwitchBot
 from bs4 import BeautifulSoup
 from pystray import Icon, Menu, MenuItem
@@ -20,6 +20,9 @@ import darkdetect as dd
 import netifaces as netif
 import requests
 import schedule
+
+from Badges import Badges
+from utils import resource_path
 
 NAME = 'Rain Color'
 
@@ -138,6 +141,7 @@ class taskTray:
     def __init__(self):
         self.stop_event = threading.Event()
         self.config = {}
+        self.show_badges = True
         self.bulbs = []
 
         # 最初に定義された amedas code
@@ -148,12 +152,15 @@ class taskTray:
         self.image = Image.new('RGB', (32, 32), WHITE)
         self.draw = ImageDraw.Draw(self.image)
         self.app = Icon(name=NAME, title=NAME, icon=self.image)
+        self.badges = Badges()
+        self.badges.start()
 
         self.doTask()
 
     def buildMenu(self):
         item = [
             MenuItem('do it', self.doIt, visible=False, default=True),
+            MenuItem('Show Badge', self.toggleBadges, checked=lambda _: self.show_badges),
             MenuItem('Reload', self.readConf),
             Menu.SEPARATOR,
         ]
@@ -207,8 +214,16 @@ class taskTray:
                 return
 
             r, g, b = self.getRGB(name)
-            lines += self.config[name].get('lines', [])
             rgb = f'{r} {g} {b}'
+            lines += self.config[name].get('lines', [])
+            if self.config[name].get('code') == self.default:
+                weather = self.config[name].get('weather')
+                temp = self.config[name].get('temp')
+                snow = self.config[name].get('snow')
+                print(weather, temp, snow)
+                images = self.getImages(weather, temp, snow)
+                self.badges.set_visible(self.show_badges)
+                self.badges.update(images)
 
             # bulbs operation (Yeelight)
             if self.config[name].get('bulb') or self.config[name].get('broadcast'):
@@ -302,6 +317,10 @@ class taskTray:
     def doOpen(self, _, item):
         name = str(item)
         self._openURL(name)
+
+    def toggleBadges(self, _, __):
+        self.show_badges = not self.show_badges
+        self.badges.set_visible(self.show_badges)
 
     def daytime(self, speaker):
         now = dt.datetime.now(dt.timezone(dt.timedelta(hours=9)))
@@ -443,6 +462,73 @@ class taskTray:
             logger.warning(e)
 
         return BLACK
+
+    def getImages(self, w, t, s):
+        def create_fitted_text_image(text, font_path=r"C:\Windows\Fonts\arialbd.ttf", target_height=72, padding=16):
+            # 1. 適切なフォントサイズを推測（高さ72pxなら、フォントサイズもだいたい72から開始）
+            font_size = target_height
+            font = ImageFont.truetype(font_path, font_size)
+
+            # 2. textbbox で実際の描画サイズを測定
+            # (left, top, right, bottom) が返る
+            bbox = ImageDraw.Draw(Image.new("RGB", (0, 0))).textbbox((0, 0), text, font=font)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+
+            # 3. 高さに合わせてフォントサイズを微調整（比率計算）
+            # 実際の高さ text_h が target_height になるようにスケールさせる
+            adjusted_font_size = int(font_size * (target_height / text_h)) - padding
+            font = ImageFont.truetype(font_path, adjusted_font_size)
+
+            # 再測定
+            bbox = ImageDraw.Draw(Image.new("RGB", (0, 0))).textbbox((0, 0), text, font=font)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+
+            # 4. 画像の作成（横幅は文字に合わせて可変）
+            img_w = text_w + (padding * 2)
+            img_h = target_height + (padding * 2)
+            image = Image.new("RGB", (int(img_w), int(img_h)), (0, 0, 0))
+            draw = ImageDraw.Draw(image)
+
+            # 5. 描画位置の計算
+            # textbbox の left, top を引くことで、余白をリセットして左上に詰められます
+            draw.text((padding - bbox[0], padding * 2 - bbox[1]), text, font=font, fill=(255, 255, 255))
+
+            return image
+
+        images = []
+        # 天気アイコン
+        icons = {
+            "晴": '2600',
+            "曇": '2601',
+            "霧": '1f32b',
+            "雨": '2614',
+            "みぞれ": '1f367',
+            "雪": '2603',
+            "雷": '26a1',
+        }
+        if w in icons:
+            code_point = icons[w]
+            image = Image.open(resource_path(f'Assets/emoji_u{code_point}.png'))
+            images.append(image)
+        elif w is None:
+            pass
+        else:
+            print(f'{w} not in icons')
+            vvox(f'想定外の天気アイコンが発生しました {w}', speed=1.2)
+
+        # 気温
+        if t != D_TEMP:
+            image = create_fitted_text_image(f'{t}C')
+            images.append(image)
+
+        # 積雪
+        if s is not None and s != D_SNOW and s != 0:
+            image = create_fitted_text_image(f'{s}cm')
+            images.append(image)
+
+        return images
 
     def stopApp(self):
         self.stop_event.set()
