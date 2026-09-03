@@ -22,9 +22,9 @@ import requests
 import schedule
 
 from Badges import Badges
-from utils import resource_path
+from utils import resource_path, getLog
 
-NAME = 'Rain Color'
+NAME = 'RainColor'
 
 INTERVAL = 5 * 60
 BLACK = (0, 0, 0)
@@ -89,10 +89,11 @@ ctypes.windll['uxtheme.dll'][135](PreferredAppMode[dd.theme()])
 
 
 # logger settings
+logname = getLog(NAME, 'log.log')
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.handlers.RotatingFileHandler("log.log", encoding='utf-8', maxBytes=1000000, backupCount=0),
+        logging.handlers.RotatingFileHandler(logname, encoding='utf-8', maxBytes=1000000, backupCount=0),
         logging.StreamHandler(),
     ],
     datefmt='%Y/%m/%d %X'
