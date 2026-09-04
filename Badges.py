@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
+from PIL import ImageTk
+from dataclasses import asdict, dataclass
 import threading
 import tkinter as tk
-from PIL import ImageTk
 import win32gui
 
+from config import Config
+
+TITLE = 'RainColor Badge'
 HEIGHT_OFFSET = 4
+
+
+@dataclass
+class Setting:
+    geometry: str
 
 
 class Badges(threading.Thread):
@@ -21,11 +30,37 @@ class Badges(threading.Thread):
         self.current_images = []
         self.taskbar_height = 48 - HEIGHT_OFFSET
         self.is_fit_mode = True
+        self.config = Config(TITLE)
+
+    def load_config(self):
+        config = {}
+        try:
+            setting = Setting(**self.config.load())
+            config = asdict(setting)
+        except TypeError:
+            pass
+        return config
+
+    def save_config(self):
+        if not self.root:
+            return
+
+        geom = self.root.geometry()
+        parts = geom.replace('x', '+').split('+')
+        curr_x = int(parts[2])
+        curr_y = int(parts[3])
+
+        setting = Setting(
+            geometry=f'+{curr_x}+{curr_y}',
+        )
+        self.config.save(asdict(setting))
 
     def run(self):
         self.root = tk.Tk()
         # TODO: reflect code point
-        self.root.title('AMeDAS Badge')
+        self.root.title(TITLE)
+        geom = self.load_config().get('geometry', '')
+        self.root.geometry(geom)
 
         # 背景と透過
         self.root.config(bg=self.trans_color)
@@ -231,6 +266,7 @@ class Badges(threading.Thread):
 
             # 5. 制限された座標を適用
             self.root.geometry(f'+{new_x}+{new_y}')
+            self.save_config()
 
     def toggle_fit(self):
         self.is_fit_mode = not self.is_fit_mode
