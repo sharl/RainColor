@@ -549,20 +549,25 @@ class taskTray:
 
             if self.config[name].get('code') == self.default:
                 lines += self.config[name].get('lines', [])
+                if self.config[name]['rgb'] != rgb:
+                    lines.append(rgb)
             else:
                 # デフォルトじゃない場合は情報を絞る
-                starts = (name, '天気 ', '気温 ')
-                parts = []
-                lines += ['']
-                for _line in self.config[name].get('lines', [name]):
+                starts = ('天気 ', '気温 ')
+                parts = [name]
+                if '' not in lines:
+                    lines += ['']
+
+                for _line in self.config[name].get('lines', []):
                     if _line.startswith(starts):
                         parts.append(_line)
+                if self.config[name]['rgb'] != rgb:
+                    parts.append(rgb)
+
                 _line = ' '.join(parts)
-                for s in list(starts)[1:]:
+                for s in list(starts):
                     _line = _line.replace(s, '')
                 lines += [_line]
-            if self.config[name]['rgb'] != rgb:
-                lines.append(rgb)
 
             print(name, rainsnow, weather, temp, snow, rgb)
 
