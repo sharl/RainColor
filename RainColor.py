@@ -307,7 +307,7 @@ class taskTray:
         if self.config[name].get('vvox', '').lower() != 'on':
             return
 
-        _name = '' if self.config[name].get('code') == self.default else f'{self.name}は'
+        _name = '' if self.config[name].get('code') == self.default else f'{name}は'
         weather = self.config[name].get('weather')
         vvox(f'{_name}{weather}なのだ', speaker=self.daytime(ずんだもん))
 
