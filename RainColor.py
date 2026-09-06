@@ -547,14 +547,37 @@ class taskTray:
             # post and voicevox
             self.voicevox(name, r, g, b)
 
-            lines += self.config[name].get('lines', [])
+            if self.config[name].get('code') == self.default:
+                lines += self.config[name].get('lines', [])
+            else:
+                # デフォルトじゃない場合は情報を絞る
+                starts = (name, '天気 ', '気温 ')
+                parts = []
+                lines += ['']
+                for _line in self.config[name].get('lines', [name]):
+                    if _line.startswith(starts):
+                        parts.append(_line)
+                _line = ' '.join(parts)
+                for s in list(starts)[1:]:
+                    _line = _line.replace(s, '')
+                lines += [_line]
             if self.config[name]['rgb'] != rgb:
                 lines.append(rgb)
 
-            print(rainsnow, weather, temp, snow, rgb)
+            print(name, rainsnow, weather, temp, snow, rgb)
+
+        # trim szTip
+        SZTIP_MAX = 128
+        title = lines[0]
+        for line in lines[1:]:
+            if len(title + line) <= SZTIP_MAX:
+                title += '\n' + line
+            else:
+                break
+        print(128, len(title))
 
         self.app.menu = self.buildMenu()
-        self.app.title = '\n'.join(lines)
+        self.app.title = title
         self.app.icon = self.image
         self.app.update_menu()
 
