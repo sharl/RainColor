@@ -570,7 +570,7 @@ class taskTray:
         SZTIP_MAX = 128
         title = lines[0]
         for line in lines[1:]:
-            if len(title + line) <= SZTIP_MAX:
+            if len(title + line) + 1 <= SZTIP_MAX:
                 title += '\n' + line
             else:
                 break
