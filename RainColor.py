@@ -147,6 +147,7 @@ class taskTray:
         self.show_badges = True
         self.bulbs = []
         # single lamp15 only
+        self.lamp15s = {}
         self.left_rgb = BLACK
         self.right_rgb = BLACK
 
@@ -445,15 +446,14 @@ class taskTray:
 
         rgb = f'{r} {g} {b}'
 
-        print(self.config[name])
+        lamp15_ip = self.config[name].get('lamp15')
         lamp15_position = self.config[name].get('lamp15_position', 'all')
-        print(name, lamp15_position)
-
-        # Lamp15 object
-        if not self.config[name].get('_lamp15'):
+        if lamp15_ip not in self.lamp15s:
             # store Lamp15 object
-            self.config[name]['_lamp15'] = Lamp15(lamp_ip)
-        lamp = self.config[name]['_lamp15']
+            self.lamp15s[lamp15_ip] = Lamp15(lamp15_ip)
+        lamp = self.lamp15s[lamp15_ip]
+
+        print(name, lamp, lamp15_position)
 
         if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
             match lamp15_position:
@@ -629,6 +629,10 @@ class taskTray:
 
             print(name, rainsnow, weather, temp, snow, rgb)
 
+        # set lamp15 brightness
+        for lamp_ip in self.lamp15s:
+            self.lamp15s[lamp_ip].rear_brightness(1)
+
         # trim szTip
         SZTIP_MAX = 128
         title = lines[0]
@@ -637,7 +641,7 @@ class taskTray:
                 title += '\n' + line
             else:
                 break
-        print(128, len(title))
+        print(SZTIP_MAX, len(title))
 
         self.app.menu = self.buildMenu()
         self.app.title = title
