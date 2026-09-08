@@ -434,7 +434,7 @@ class taskTray:
 
     def lamp15(self, name: str, r: int, g: int, b: int):
         """
-        lamb15 operation (Yeelight LED Screen Light Bar Pro)
+        set lamp15 color (Yeelight LED Screen Light Bar Pro)
 
         configs:
           lamp15: IP address
@@ -451,9 +451,7 @@ class taskTray:
         if lamp15_ip not in self.lamp15s:
             # store Lamp15 object
             self.lamp15s[lamp15_ip] = Lamp15(lamp15_ip)
-        lamp = self.lamp15s[lamp15_ip]
-
-        print(name, lamp, lamp15_position)
+        print(name, lamp15_position)
 
         if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
             match lamp15_position:
@@ -478,8 +476,6 @@ class taskTray:
                     self.right_rgb = color_rgb
                 case _:
                     pass
-
-        lamp.segments(self.left_rgb, self.right_rgb)
 
     def switchbot(self, name: str, r: int, g: int, b: int):
         """
@@ -630,8 +626,14 @@ class taskTray:
             print(name, rainsnow, weather, temp, snow, rgb)
 
         # set lamp15 brightness
-        for lamp_ip in self.lamp15s:
-            self.lamp15s[lamp_ip].rear_brightness(1)
+        print(self.left_rgb, self.right_rgb)
+        if self.left_rgb == BLACK and self.right_rgb == BLACK:
+            for lamp_ip in self.lamp15s:
+                self.lamp15s[lamp_ip].rear_off()
+        else:
+            for lamp_ip in self.lamp15s:
+                self.lamp15s[lamp_ip].segments(self.left_rgb, self.right_rgb)
+                self.lamp15s[lamp_ip].rear_brightness(1)
 
         # trim szTip
         SZTIP_MAX = 128
