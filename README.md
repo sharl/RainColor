@@ -36,6 +36,8 @@ location = https://weather.yahoo.co.jp/weather/zoomradar/?lat=42.923&lon=143.193
 rgb = 241 241 239
 # bulb = 192.168.0.204 192.168.0.220
 # broadcast = 192.168.0.255
+# lamp15 = 192.168.0.218
+# lamp15_position = right
 # sb_device_id = XXXXXXXXXXXX YYYYYYYYYYYY
 # vvox = off
 # vvox_host = localhost
@@ -78,6 +80,18 @@ Yeelight RGB デバイスの IP アドレス 空白区切りで複数指定可�
 ### broadcast
 
 対象ネットワークのすべての Yeelight RGB デバイスを使用
+
+### lamp15
+
+Yeelight LED Screen Light Bar Pro の IP アドレス
+
+### lamp15_position
+
+Yeelight LED Screen Light Bar Pro の背面 LED のどちらを対象とするかを指定
+
+`all` `left` `right`
+
+省略時は `all`
 
 ### sb_device_id
 
