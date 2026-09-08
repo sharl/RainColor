@@ -22,6 +22,7 @@ import requests
 import schedule
 
 from Badges import Badges
+from lamp15 import Lamp15
 from utils import resource_path, getLog
 
 NAME = 'RainColor'
@@ -145,6 +146,9 @@ class taskTray:
         self.config = {}
         self.show_badges = True
         self.bulbs = []
+        # single lamp15 only
+        self.left_rgb = BLACK
+        self.right_rgb = BLACK
 
         # 最初に定義された amedas code
         self.default = None
@@ -427,6 +431,56 @@ class taskTray:
             except Exception as e:
                 logger.warning(e)
 
+    def lamp15(self, name: str, r: int, g: int, b: int):
+        """
+        lamb15 operation (Yeelight LED Screen Light Bar Pro)
+
+        configs:
+          lamp15: IP address
+          lamp15_location: all, left, right
+        """
+        lamp_ip = self.config[name].get('lamp15')
+        if not lamp_ip:
+            return
+
+        rgb = f'{r} {g} {b}'
+
+        print(self.config[name])
+        lamp15_position = self.config[name].get('lamp15_position', 'all')
+        print(name, lamp15_position)
+
+        # Lamp15 object
+        if not self.config[name].get('_lamp15'):
+            # store Lamp15 object
+            self.config[name]['_lamp15'] = Lamp15(lamp_ip)
+        lamp = self.config[name]['_lamp15']
+
+        if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
+            match lamp15_position:
+                case 'all':
+                    self.left_rgb = BLACK
+                    self.right_rgb = BLACK
+                case 'left':
+                    self.left_rgb = BLACK
+                case 'right':
+                    self.right_rgb = BLACK
+                case _:
+                    pass
+        else:
+            color_rgb = (r, g, b)
+            match lamp15_position:
+                case 'all':
+                    self.left_rgb = color_rgb
+                    self.right_rgb = color_rgb
+                case 'left':
+                    self.left_rgb = color_rgb
+                case 'right':
+                    self.right_rgb = color_rgb
+                case _:
+                    pass
+
+        lamp.segments(self.left_rgb, self.right_rgb)
+
     def switchbot(self, name: str, r: int, g: int, b: int):
         """
         bulbs operation (SwitchBot)
@@ -544,6 +598,9 @@ class taskTray:
                 self.badges.set_visible(self.show_badges)
                 self.badges.update(images)
 
+            # set lamb15
+            self.lamp15(name, r, g, b)
+
             # post and voicevox
             self.voicevox(name, r, g, b)
 
@@ -566,7 +623,8 @@ class taskTray:
 
                 _line = ' '.join(parts)
                 for s in list(starts):
-                    _line = _line.replace(s, '')
+                    if _line:
+                        _line = _line.replace(s, '')
                 lines += [_line]
 
             print(name, rainsnow, weather, temp, snow, rgb)
