@@ -5,6 +5,8 @@ from typing import Any
 import json
 import socket
 
+BLACK = (0, 0, 0)
+
 
 class Lamp15:
     """
@@ -14,6 +16,8 @@ class Lamp15:
         self.host = host
         self.port = port
         self.timeout = timeout
+        self.left_rgb = BLACK
+        self.right_rgb = BLACK
         self.sock = None
         self._id = 0
 
@@ -108,16 +112,16 @@ class Lamp15:
         left: tuple[int, int, int],
         right: tuple[int, int, int],
     ) -> Any:
-        left_rgb = self._rgb(*left)
-        right_rgb = self._rgb(*right)
+        self.left_rgb = left
+        self.right_rgb = right
 
         return self._command(
             'set_segment_rgb',
-            [left_rgb, right_rgb],
+            [self._rgb(*left), self._rgb(*right)],
         )
 
-    def left(self, r: int, g: int, b: int) -> Any:
-        return self.segments((r, g, b), (r, g, b))
+    def set_left_rgb(self, left_rgb: tuple[int, int, int]) -> Any:
+        return self.segments(left_rgb, self.right_rgb)
 
-    def right(self, r: int, g: int, b: int) -> Any:
-        return self.segments((r, g, b), (r, g, b))
+    def set_right_rgb(self, right_rgb: tuple[int, int, int]) -> Any:
+        return self.segments(self.left_rgb, right_rgb)
