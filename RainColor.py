@@ -146,10 +146,7 @@ class taskTray:
         self.config = {}
         self.show_badges = True
         self.bulbs = []
-        # single lamp15 only
         self.lamp15s = {}
-        self.left_rgb = BLACK
-        self.right_rgb = BLACK
 
         # 最初に定義された amedas code
         self.default = None
@@ -453,29 +450,36 @@ class taskTray:
             self.lamp15s[lamp15_ip] = Lamp15(lamp15_ip)
         print(name, lamp15_position)
 
+        lamp = self.lamp15s[lamp15_ip]
+        left_rgb = lamp.left_rgb
+        right_rgb = lamp.right_rgb
         if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
             match lamp15_position:
                 case 'all':
-                    self.left_rgb = BLACK
-                    self.right_rgb = BLACK
+                    left_rgb = BLACK
+                    right_rgb = BLACK
                 case 'left':
-                    self.left_rgb = BLACK
+                    left_rgb = BLACK
                 case 'right':
-                    self.right_rgb = BLACK
+                    right_rgb = BLACK
                 case _:
                     pass
         else:
             color_rgb = (r, g, b)
             match lamp15_position:
                 case 'all':
-                    self.left_rgb = color_rgb
-                    self.right_rgb = color_rgb
+                    left_rgb = color_rgb
+                    right_rgb = color_rgb
                 case 'left':
-                    self.left_rgb = color_rgb
+                    left_rgb = color_rgb
                 case 'right':
-                    self.right_rgb = color_rgb
+                    right_rgb = color_rgb
                 case _:
                     pass
+
+        # set only
+        lamp.left_rgb = left_rgb
+        lamp.right_rgb = right_rgb
 
     def switchbot(self, name: str, r: int, g: int, b: int):
         """
@@ -625,15 +629,17 @@ class taskTray:
 
             print(name, rainsnow, weather, temp, snow, rgb)
 
-        # set lamp15 brightness
-        print(self.left_rgb, self.right_rgb)
-        if self.left_rgb == BLACK and self.right_rgb == BLACK:
-            for lamp_ip in self.lamp15s:
-                self.lamp15s[lamp_ip].rear_off()
-        else:
-            for lamp_ip in self.lamp15s:
-                self.lamp15s[lamp_ip].segments(self.left_rgb, self.right_rgb)
-                self.lamp15s[lamp_ip].rear_brightness(1)
+        # set all lamp15 RGB, brightness
+        for lamp_ip in self.lamp15s:
+            lamp = self.lamp15s[lamp_ip]
+            left_rgb = lamp.left_rgb
+            right_rgb = lamp.right_rgb
+            print(lamp, left_rgb, right_rgb)
+            if left_rgb == BLACK and right_rgb == BLACK:
+                lamp.rear_off()
+            else:
+                lamp.segments(left_rgb, right_rgb)
+                lamp.rear_brightness(1)
 
         # trim szTip
         SZTIP_MAX = 128
