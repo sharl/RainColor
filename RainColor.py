@@ -627,7 +627,7 @@ class taskTray:
                         _line = _line.replace(s, '')
                 lines += [_line]
 
-            print(name, rainsnow, weather, temp, snow, rgb)
+            print(name, rainsnow, weather, temp, snow, rgb if rgb != self.config[name]['rgb'] else '')
 
         # set all lamp15 RGB, brightness
         for lamp_ip in self.lamp15s:
