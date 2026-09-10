@@ -448,7 +448,7 @@ class taskTray:
         if lamp15_ip not in self.lamp15s:
             # store Lamp15 object
             self.lamp15s[lamp15_ip] = Lamp15(lamp15_ip)
-        print(name, lamp15_position)
+        # print(name, lamp15_position)
 
         lamp = self.lamp15s[lamp15_ip]
         left_rgb = lamp.left_rgb
@@ -634,7 +634,7 @@ class taskTray:
             lamp = self.lamp15s[lamp_ip]
             left_rgb = lamp.left_rgb
             right_rgb = lamp.right_rgb
-            print(lamp, left_rgb, right_rgb)
+            print(lamp_ip, left_rgb, right_rgb)
             if left_rgb == BLACK and right_rgb == BLACK:
                 lamp.rear_off()
             else:
