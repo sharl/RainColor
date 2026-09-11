@@ -649,7 +649,7 @@ class taskTray:
                 title += '\n' + line
             else:
                 break
-        print(SZTIP_MAX, len(title))
+        # print(SZTIP_MAX, len(title))
 
         self.app.menu = self.buildMenu()
         self.app.title = title
