@@ -88,6 +88,16 @@ Yeelight LED Screen Light Bar Pro の背面 LED のどちらを対象とする�
 
 SwichBot RGB デバイスの ID です 空白区切りで複数指定可能
 
+利用するには以下の設定が必要です
+
+```powershell
+PS> Get-Content ~/.Switchbot | python -m json.tool
+{
+  "token": "Switchbot token",
+  "secret": "Switchbot secret"
+}
+```
+
 ### vvox
 
 VOICEVOX で通知する場合 on を指定します
