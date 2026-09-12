@@ -140,6 +140,55 @@ def get_interface_name(addr):
     return None
 
 
+def color2mm(rainsnow, r, g, b):
+    """
+    雨雲レーダーの色と降水量のマッピング
+    TODO: 雪の場合
+    """
+    rc2mm = {
+            0: (204, 255, 255),
+            1: (102, 255, 255),
+            2: (0, 204, 255),
+            4: (0, 153, 255),
+            8: (51, 102, 255),
+            12: (51, 255, 0),
+            16: (51, 204, 0),
+            24: (25, 153, 0),
+            32: (255, 255, 0),
+            40: (255, 204, 0),
+    }
+    sc2mm = {
+        # TODO: fill params
+    }
+    ld = float('inf')
+    mm = 0
+    table = sc2mm if rainsnow else rc2mm
+    for _mm in table:
+        RR, GG, BB = table[_mm]
+        d = (RR - r) ** 2 + (GG - g) ** 2 + (BB - b) ** 2
+        if d < ld:
+            ld = d
+            mm = _mm
+    return mm
+
+
+def mm2sc(mm):
+    """
+    降水量からセグメントカラーへ変換
+    """
+    if mm >= 32:
+        return (1, 0, 0)
+    if mm >= 16:
+        return (1, 1, 0)
+    if mm >= 8:
+        return (0, 1, 0)
+    if mm >= 4:
+        return (0, 0, 1)
+    if mm:
+        return (1, 1, 1)
+    return BLACK
+
+
 class taskTray:
     def __init__(self):
         self.stop_event = threading.Event()
@@ -429,57 +478,15 @@ class taskTray:
             except Exception as e:
                 logger.warning(e)
 
-    def lamp15(self, name: str, r: int, g: int, b: int):
-        """
-        set lamp15 color (Yeelight LED Screen Light Bar Pro)
-
-        configs:
-          lamp15: IP address
-          lamp15_location: all, left, right
-        """
-        lamp_ip = self.config[name].get('lamp15')
-        if not lamp_ip:
-            return
-
-        rgb = f'{r} {g} {b}'
-
+    def entry_lamp15(self, name):
         lamp15_ip = self.config[name].get('lamp15')
-        lamp15_position = self.config[name].get('lamp15_position', 'all')
+        if not lamp15_ip:
+            return None
+
         if lamp15_ip not in self.lamp15s:
             # store Lamp15 object
             self.lamp15s[lamp15_ip] = Lamp15(lamp15_ip)
-        # print(name, lamp15_position)
-
-        lamp = self.lamp15s[lamp15_ip]
-        left_rgb = lamp.left_rgb
-        right_rgb = lamp.right_rgb
-        if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
-            match lamp15_position:
-                case 'all':
-                    left_rgb = BLACK
-                    right_rgb = BLACK
-                case 'left':
-                    left_rgb = BLACK
-                case 'right':
-                    right_rgb = BLACK
-                case _:
-                    pass
-        else:
-            color_rgb = (r, g, b)
-            match lamp15_position:
-                case 'all':
-                    left_rgb = color_rgb
-                    right_rgb = color_rgb
-                case 'left':
-                    left_rgb = color_rgb
-                case 'right':
-                    right_rgb = color_rgb
-                case _:
-                    pass
-
-        # set only
-        lamp.left_rgb = left_rgb
-        lamp.right_rgb = right_rgb
+        return lamp15_ip
 
     def switchbot(self, name: str, r: int, g: int, b: int):
         """
@@ -560,6 +567,8 @@ class taskTray:
                 if not og_image:
                     return BLACK
                 img_url = og_image.get('content').replace('1200x630', '1x1')
+                # opacity 0.6 -> 1.0
+                img_url = img_url.replace('fill-opacity%22%3A0.6', 'fill-opacity%22%3A1.0')
 
                 with requests.get(img_url, timeout=10) as r:
                     try:
@@ -599,7 +608,32 @@ class taskTray:
                 self.badges.update(images)
 
             # set lamb15
-            self.lamp15(name, r, g, b)
+            lamp_ip = self.entry_lamp15(name)
+            lamp15_position = self.config[name].get('lamp15_position', 'all')
+            if lamp15_position == 'all':
+                if lamp_ip:
+                    lamp = self.lamp15s[lamp_ip]
+                    if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
+                        lamp.rear_off()
+                    else:
+                        lamp.rear_on()
+                        lamp.rear_set_rgb((r, g, b))
+                        lamp.rear_brightness(100)
+            else:
+                if lamp_ip:
+                    if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
+                        mm = 0
+                        color = BLACK
+                    else:
+                        mm = color2mm(rainsnow, r, g, b)
+                        color = mm2sc(mm)
+                    print(lamp15_position, (r, g, b), mm, color)
+
+                    lamp = self.lamp15s[lamp_ip]
+                    if lamp15_position == 'left':
+                        lamp.left_rgb = color
+                    if lamp15_position == 'right':
+                        lamp.right_rgb = color
 
             # post and voicevox
             self.voicevox(name, r, g, b)
@@ -629,17 +663,17 @@ class taskTray:
 
             print(name, rainsnow, weather, temp, snow, rgb if rgb != self.config[name]['rgb'] else '')
 
-        # set all lamp15 RGB, brightness
+        # set all lamp15 RGB segment
+        lamp15_position = self.config[name].get('lamp15_position', 'all')
         for lamp_ip in self.lamp15s:
             lamp = self.lamp15s[lamp_ip]
             left_rgb = lamp.left_rgb
             right_rgb = lamp.right_rgb
-            print(lamp_ip, left_rgb, right_rgb)
             if left_rgb == BLACK and right_rgb == BLACK:
                 lamp.rear_off()
             else:
                 lamp.segments(left_rgb, right_rgb)
-                lamp.rear_brightness(1)
+                print(lamp_ip, lamp.left_rgb, lamp.right_rgb)
 
         # trim szTip
         SZTIP_MAX = 128
