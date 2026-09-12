@@ -123,6 +123,9 @@ class Lamp15:
     ]
 
     def _round(self, rgb: tuple[int, int, int]) -> tuple[int, int, int]:
+        if rgb == (0, 0, 0):
+            return rgb
+
         r, g, b = rgb
 
         least_d = float('inf')
