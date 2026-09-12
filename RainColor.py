@@ -252,7 +252,9 @@ class taskTray:
                     bulbs = discover_bulbs(interface=interface)
                     for bulb in bulbs:
                         self.bulbs.append(Bulb(bulb['ip']))
-            self.config[section]['rgb'] = config[section].get('rgb', '247 246 237')
+            # get normal map color
+            r, g, b = self.getRGB(section, layer=False)
+            self.config[section]['rgb'] = f'{r} {g} {b}'
 
             if not self.config[section].get('code'):
                 del self.config[section]
@@ -556,7 +558,7 @@ class taskTray:
 
             logger.debug(f"{self.config[name]['rgb']} {rgb} {not notified} {post_data}")
 
-    def getRGB(self, name: str) -> list[int]:
+    def getRGB(self, name: str, layer=True) -> list[int]:
         rainsnow = self.config[name].get('rainsnow', False)
         base = self.config[name]['location'].split('?')
         base_url = f'{base[0]}{"rainsnow/" if rainsnow else ""}?{base[1]}'
@@ -567,8 +569,14 @@ class taskTray:
                 if not og_image:
                     return BLACK
                 img_url = og_image.get('content').replace('1200x630', '1x1')
-                # opacity 0.6 -> 1.0
-                img_url = img_url.replace('fill-opacity%22%3A0.6', 'fill-opacity%22%3A1.0')
+                if layer:
+                    # opacity 0.6 -> 1.0
+                    img_url = img_url.replace('%22fill-opacity%22%3A0.6', '%22fill-opacity%22%3A1.0')
+                else:
+                    # omit rainsnow layer
+                    base = img_url.split('?')
+                    params = base[-1].split('&')[1:]
+                    img_url = base[0] + '?' + '&'.join(params)
 
                 with requests.get(img_url, timeout=10) as r:
                     try:
