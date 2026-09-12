@@ -99,6 +99,12 @@ class Lamp15:
     def rear_off(self) -> Any:
         return self._command('bg_set_power', ['off', 'sudden', 0])
 
+    def rear_set_rgb(self, rgb: tuple[int, int, int]) -> Any:
+        return self._command(
+            'bg_set_rgb',
+            [self._rgb(*rgb), self._rgb(*rgb)],
+        )
+
     def rear_brightness(self, brightness: int) -> Any:
         return self._command(
             'bg_set_bright',
@@ -106,14 +112,36 @@ class Lamp15:
         )
 
     # --- Rear left / right ------------------------------------------
+    SEGMENT_COLORS = [
+        (0, 0, 1),      # blue
+        (0, 1, 0),      # green
+        (0, 1, 1),      # cyan
+        (1, 0, 0),      # red
+        (1, 0, 1),      # magenta
+        (1, 1, 0),      # yellow
+        (1, 1, 1),      # white
+    ]
+
+    def _round(self, rgb: tuple[int, int, int]) -> tuple[int, int, int]:
+        r, g, b = rgb
+
+        least_d = float('inf')
+        place = 0
+        for i, (RR, GG, BB) in enumerate(self.SEGMENT_COLORS):
+            d = (RR - r) ** 2 + (GG - g) ** 2 + (BB - b) ** 2
+            if d < least_d:
+                least_d = d
+                place = i
+
+        return self.SEGMENT_COLORS[place]
 
     def segments(
         self,
         left: tuple[int, int, int],
         right: tuple[int, int, int],
     ) -> Any:
-        self.left_rgb = left
-        self.right_rgb = right
+        self.left_rgb = self._round(left)
+        self.right_rgb = self._round(right)
 
         return self._command(
             'set_segment_rgb',
