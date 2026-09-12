@@ -601,6 +601,7 @@ class taskTray:
 
             # get RGB
             r, g, b = self.getRGB(name)
+            mm = color2mm(rainsnow, r, g, b)
             rgb = f'{r} {g} {b}'
 
             if self.config[name].get('code') == self.default:
@@ -635,7 +636,7 @@ class taskTray:
                     else:
                         mm = color2mm(rainsnow, r, g, b)
                         color = mm2sc(mm)
-                    print(lamp15_position, (r, g, b), mm, color)
+                    # print(lamp15_position, (r, g, b), mm, color)
 
                     lamp = self.lamp15s[lamp_ip]
                     if lamp15_position == 'left':
@@ -649,7 +650,7 @@ class taskTray:
             if self.config[name].get('code') == self.default:
                 lines += self.config[name].get('lines', [])
                 if self.config[name]['rgb'] != rgb:
-                    lines.append(rgb)
+                    lines.append(f'{mm}mm')
             else:
                 # デフォルトじゃない場合は情報を絞る
                 starts = ('天気 ', '気温 ')
@@ -661,7 +662,7 @@ class taskTray:
                     if _line.startswith(starts):
                         parts.append(_line)
                 if self.config[name]['rgb'] != rgb:
-                    parts.append(rgb)
+                    parts.append(f'{mm}mm')
 
                 _line = ' '.join(parts)
                 for s in list(starts):
@@ -669,7 +670,7 @@ class taskTray:
                         _line = _line.replace(s, '')
                 lines += [_line]
 
-            print(name, rainsnow, weather, temp, snow, rgb if rgb != self.config[name]['rgb'] else '')
+            print(f'{name} {rainsnow=} {weather} {temp} {snow=} {mm}mm')
 
         # set all lamp15 RGB segment
         lamp15_position = self.config[name].get('lamp15_position', 'all')
