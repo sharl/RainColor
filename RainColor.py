@@ -634,10 +634,8 @@ class taskTray:
             else:
                 if lamp_ip:
                     if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
-                        mm = 0
                         color = BLACK
                     else:
-                        mm = color2mm(rainsnow, r, g, b)
                         color = mm2sc(mm)
                     # print(lamp15_position, (r, g, b), mm, color)
 
