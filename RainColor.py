@@ -601,8 +601,11 @@ class taskTray:
 
             # get RGB
             r, g, b = self.getRGB(name)
-            mm = color2mm(rainsnow, r, g, b)
             rgb = f'{r} {g} {b}'
+            if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
+                mm = 0
+            else:
+                mm = color2mm(rainsnow, r, g, b)
 
             if self.config[name].get('code') == self.default:
                 # set Yeelight
