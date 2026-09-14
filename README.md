@@ -21,10 +21,20 @@ Yahoo 雨雲レーダー画像を取得して降水量の色をタスクトレ�
 
 ## Run
 
-```
+```powershell
 git clone https://github.com/sharl/RainColor.git
 cd RainColor
+python -m venv .venv
+.\.venv\Scripts\activate
 pip install -r requirements.txt
+python RainColor.py
+```
+
+### Re-run
+
+```powershell
+cd RainColor
+.\.venv\Scripts\activate
 python RainColor.py
 ```
 
