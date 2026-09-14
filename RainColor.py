@@ -529,13 +529,13 @@ class taskTray:
 
         if not notified and (self.config[name]['rgb'] != rgb):
             # 通知しておらずデフォルトカラーと異なる (つまり降り始めた)
-            line = self.config[name].get('format_falling', 'さんの家、降り始めたみたいです')
+            line = self.config[name].get('format_falling', '、雨みたい')
             post_data['text'] = name + line
             # 通知済みにする
             self.config[name]['notified'] = True
         elif notified and (self.config[name]['rgb'] == rgb):
             # 通知済みでデフォルトカラーと一致 (つまり止んだ)
-            line = self.config[name].get('format_clear', 'さんの家、止んだみたいです')
+            line = self.config[name].get('format_clear', '、止んだみたい')
             post_data['text'] = name + line
             # 通知していない状態に
             self.config[name]['notified'] = False

@@ -43,8 +43,8 @@ location = https://weather.yahoo.co.jp/weather/zoomradar/?lat=42.923&lon=143.193
 # vvox_port = 50021
 # vvox_voice = 3
 # vvox_speed = 1.2
-# format_falling = さんの家、降り始めたみたいです
-# format_clear   = さんの家、止んだみたいです
+# format_falling = 、雨みたい
+# format_clear   = 、止んだみたい
 # channel = dev
 # post = http://localhost:16543/chat_postMessage
 ```
@@ -108,8 +108,8 @@ VOICEVOX で通知する場合 on を指定します
 - vvox_port = 50021
 - vvox_voice = 3
 - vvox_speed = 1.2
-- format_falling = さんの家、降り始めたみたいです
-- format_clear   = さんの家、止んだみたいです
+- format_falling = 、雨みたい
+- format_clear   = 、止んだみたい
 
 必要に応じて変更してください
 
