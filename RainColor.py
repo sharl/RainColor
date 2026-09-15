@@ -213,8 +213,10 @@ class taskTray:
     def buildMenu(self):
         item = [
             MenuItem('do it', self.doIt, visible=False, default=True),
-            MenuItem('Show Badge', self.toggleBadges, checked=lambda _: self.show_badges),
             MenuItem('Reload', self.readConf),
+            Menu.SEPARATOR,
+            MenuItem('Show Badge', self.toggleBadges, checked=lambda _: self.show_badges),
+            # TODO: listed toggle options
             Menu.SEPARATOR,
         ]
         for section in self.config:
