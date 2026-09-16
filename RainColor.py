@@ -678,7 +678,7 @@ class taskTray:
                         _line = _line.replace(s, '')
                 lines += [_line]
 
-            print(f'{name} {rainsnow=} {weather if weather else "\u3000"} {temp} {mm}mm {snow=}')
+            print(f'{name} {rainsnow=} {weather if weather else "\u3000"} {temp:.1f} {mm}mm {snow=}')
 
         # set all lamp15 RGB segment
         lamp15_position = self.config[name].get('lamp15_position', 'all')
