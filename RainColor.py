@@ -184,8 +184,10 @@ def mm2sc(mm):
         return (0, 1, 0)
     if mm >= 4:
         return (0, 0, 1)
-    if mm:
+    if mm >= 2:
         return (1, 1, 1)
+    if mm:
+        return (0, 1, 1)
     return BLACK
 
 
