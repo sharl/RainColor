@@ -196,6 +196,8 @@ class taskTray:
         self.show_badges = True
         self.bulbs = []
         self.lamp15s = {}
+        # each lamp color
+        self.segment_colors = {}
 
         # 最初に定義された amedas code
         self.default = None
@@ -489,7 +491,10 @@ class taskTray:
 
         if lamp15_ip not in self.lamp15s:
             # store Lamp15 object
-            self.lamp15s[lamp15_ip] = Lamp15(lamp15_ip)
+            lamp = Lamp15(lamp15_ip)
+            self.lamp15s[lamp15_ip] = lamp
+            self.segment_colors[lamp15_ip] = (lamp.left_rgb, lamp.right_rgb)
+            print(lamp15_ip, 'init', self.segment_colors[lamp15_ip])
         return lamp15_ip
 
     def switchbot(self, name: str, r: int, g: int, b: int):
@@ -684,8 +689,13 @@ class taskTray:
             if left_rgb == BLACK and right_rgb == BLACK:
                 lamp.rear_off()
             else:
-                lamp.segments(left_rgb, right_rgb)
-                print(lamp_ip, lamp.left_rgb, lamp.right_rgb)
+                color_set = (left_rgb, right_rgb)
+                # print(lamp_ip, 'before', color_set, self.segment_colors[lamp_ip])
+                if self.segment_colors[lamp_ip] != color_set:
+                    self.segment_colors[lamp_ip] = color_set
+                    lamp.segments(left_rgb, right_rgb)
+                    print(lamp_ip, lamp.left_rgb, lamp.right_rgb)
+                # print(lamp_ip, 'after ', color_set, self.segment_colors[lamp_ip])
 
         # trim szTip
         SZTIP_MAX = 128
