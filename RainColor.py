@@ -15,7 +15,7 @@ from SwitchBot import SwitchBot
 from bs4 import BeautifulSoup
 from pystray import Icon, Menu, MenuItem
 from vvox import vvox
-from yeelight import discover_bulbs, Bulb
+from yeelight import discover_bulbs, Bulb, BulbException
 import darkdetect as dd
 import netifaces as netif
 import requests
@@ -482,6 +482,13 @@ class taskTray:
                         bulb.turn_on()
                         bulb.set_rgb(r, g, b)
                         bulb.set_brightness(1)
+            except BulbException as e:
+                _bulbs = self.config[name].get('bulb', '')
+                _broad = self.config[name].get('broadcast', '')
+                confs = ' '.join([_bulbs, _broad]).strip().split()
+                bulbs = [bulb._ip for bulb in self.bulbs]
+                diff = ' '.join(list(set(confs) ^ set(bulbs)))
+                logger.warning(f'yeelight Exception: {e} {diff}')
             except Exception as e:
                 logger.warning(e)
 
