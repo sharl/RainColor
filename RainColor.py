@@ -503,6 +503,7 @@ class taskTray:
         if not lamp15_ip:
             return None
 
+        err = 0
         try:
             if lamp15_ip not in self.lamp15s:
                 # store Lamp15 object
