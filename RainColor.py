@@ -470,6 +470,7 @@ class taskTray:
         """
         rgb = f'{r} {g} {b}'
 
+        err = 0
         if self.config[name].get('bulb') or self.config[name].get('broadcast'):
             try:
                 if rgb == self.config[name]['rgb'] or (r, g, b) == BLACK:
@@ -489,21 +490,33 @@ class taskTray:
                 bulbs = [bulb._ip for bulb in self.bulbs]
                 diff = ' '.join(list(set(confs) ^ set(bulbs)))
                 logger.warning(f'yeelight Exception: {e} {diff}')
+                err += 1
             except Exception as e:
                 logger.warning(e)
+                err += 1
+            finally:
+                if err:
+                    self.draw.rectangle((0, 0, 31, 31), fill=(r, g, b), outline=RED)
 
     def entry_lamp15(self, name):
         lamp15_ip = self.config[name].get('lamp15')
         if not lamp15_ip:
             return None
 
-        if lamp15_ip not in self.lamp15s:
-            # store Lamp15 object
-            lamp = Lamp15(lamp15_ip)
-            self.lamp15s[lamp15_ip] = lamp
-            self.segment_colors[lamp15_ip] = (lamp.left_rgb, lamp.right_rgb)
-            print(lamp15_ip, 'init', self.segment_colors[lamp15_ip])
-        return lamp15_ip
+        try:
+            if lamp15_ip not in self.lamp15s:
+                # store Lamp15 object
+                lamp = Lamp15(lamp15_ip)
+                self.lamp15s[lamp15_ip] = lamp
+                self.segment_colors[lamp15_ip] = (lamp.left_rgb, lamp.right_rgb)
+                print(lamp15_ip, 'init', self.segment_colors[lamp15_ip])
+            return lamp15_ip
+        except Exception as e:
+            logger.warning(e)
+            err += 1
+        finally:
+            if err:
+                self.draw.rectangle((0, 0, 31, 31), fill=(r, g, b), outline=RED)
 
     def switchbot(self, name: str, r: int, g: int, b: int):
         """
