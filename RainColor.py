@@ -385,13 +385,12 @@ class taskTray:
         HH = now.strftime('%H')
         hh = f'{int(HH) // 3 * 3:02d}'
         url = f'https://www.jma.go.jp/bosai/amedas/data/point/{code}/{yyyymmdd}_{hh}.json'
+        rainsnow = False
+        weather = None
+        temp = D_TEMP
+        snow = D_SNOW
         try:
             with requests.get(url, timeout=10) as r:
-                rainsnow = False
-                weather = None
-                temp = D_TEMP
-                snow = D_SNOW
-
                 # set newest data to _vars
                 data = r.json()
                 base_key = f'{yyyymmdd}{HH}0000'        # 積雪は1時間毎
@@ -517,7 +516,7 @@ class taskTray:
             err += 1
         finally:
             if err:
-                self.draw.rectangle((0, 0, 31, 31), fill=(r, g, b), outline=RED)
+                self.draw.rectangle((0, 0, 31, 31), fill=BLACK, outline=RED)
 
     def switchbot(self, name: str, r: int, g: int, b: int):
         """
