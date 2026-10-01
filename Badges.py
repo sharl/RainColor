@@ -8,6 +8,7 @@ import win32gui
 from config import Config
 
 TITLE = 'RainColor Badge'
+HEIGHT_DEFAULT = 48
 HEIGHT_OFFSET = 4
 
 
@@ -28,7 +29,7 @@ class Badges(threading.Thread):
         self.offset_y = 0
         self.orientation = 'horizontal'
         self.current_images = []
-        self.taskbar_height = 48 - HEIGHT_OFFSET
+        self.taskbar_height = HEIGHT_DEFAULT - HEIGHT_OFFSET
         self.is_fit_mode = True
         self.config = Config(TITLE)
 
@@ -117,7 +118,7 @@ class Badges(threading.Thread):
         # 現在のタスクバーの高さを取得
         hwnd = win32gui.FindWindow('Shell_TrayWnd', None)
         rect = win32gui.GetWindowRect(hwnd)
-        self.taskbar_height = rect[3] - rect[1] - HEIGHT_OFFSET
+        self.taskbar_height = min(rect[3] - rect[1] - HEIGHT_OFFSET, HEIGHT_DEFAULT)
 
         def _do_update():
             for widget in self.container.winfo_children():
