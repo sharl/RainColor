@@ -596,7 +596,10 @@ class taskTray:
                 og_image = soup.find('meta', property='og:image')
                 if not og_image:
                     return BLACK
-                img_url = og_image.get('content').replace('1200x630', '1x1')
+                img_url = og_image.get('content')
+                if not img_url:
+                    return BLACK
+                img_url = img_url.replace('1200x630', '1x1')
                 if layer:
                     # opacity 0.6 -> 1.0
                     img_url = img_url.replace('%22fill-opacity%22%3A0.6', '%22fill-opacity%22%3A1.0')
