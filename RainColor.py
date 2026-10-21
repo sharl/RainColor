@@ -686,7 +686,7 @@ class taskTray:
                     lines.append(f'{mm}mm')
             else:
                 # デフォルトじゃない場合は情報を絞る
-                starts = ('天気 ', '気温 ')
+                starts = ('天気 ', '気温 ', '積雪 ')
                 parts = [name]
                 if '' not in lines:
                     lines += ['']
