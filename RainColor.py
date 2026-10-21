@@ -448,8 +448,9 @@ class taskTray:
                                 self.vvox_temp(name)
                         elif k == 'snow':
                             snow = v
-                            if snow is not None and snow != self.config[name].get('snow'):
-                                plus = snow > self.config[name].get('snow') and self.config[name].get('snow') != D_SNOW
+                            _snow = self.config[name].get('snow', D_SNOW)
+                            if snow is not None and snow != _snow:
+                                plus = snow and snow > _snow and _snow != D_SNOW
                                 self.config[name]['snow'] = snow
                                 self.vvox_snow(name, plus)
 
