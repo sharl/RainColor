@@ -6,7 +6,7 @@ idna
 ifaddr
 netifaces
 pillow
-PyAudio
+pvspeaker
 pystray
 pywin32
 requests
