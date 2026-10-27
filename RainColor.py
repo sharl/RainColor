@@ -461,8 +461,10 @@ class taskTray:
                         else:
                             lines.append(f'{t} {v}{u}')
                 self.config[name]['lines'] = lines
-        finally:
-            return rainsnow, weather, temp, snow
+        except Exception:
+            pass
+
+        return rainsnow, weather, temp, snow
 
     def yeelight(self, name: str, r: int, g: int, b: int):
         """
@@ -703,7 +705,7 @@ class taskTray:
                         _line = _line.replace(s, '')
                 lines += [_line]
 
-            print(f'{name[:2]} {rainsnow=} {weather if weather else "\u3000"} {temp:.1f} {mm}mm {snow=}')
+            print(f'{name[:2]} rs:{str(rainsnow)[0]} {weather if weather else "\u3000"} {temp:>5.1f} {mm}mm {snow:>3}')
 
         # set all lamp15 RGB segment
         lamp15_position = self.config[name].get('lamp15_position', 'all')
