@@ -143,7 +143,6 @@ def get_interface_name(addr):
 def color2mm(rainsnow, r, g, b):
     """
     雨雲レーダーの色と降水量のマッピング
-    TODO: 雪の場合
     """
     rc2mm = {
         # 0: (204, 255, 255),
@@ -159,6 +158,23 @@ def color2mm(rainsnow, r, g, b):
     }
     sc2mm = {
         # TODO: fill params
+        # rainLv1 b0ecfb (176, 236, 251)
+        1: (176, 236, 251),
+        # rainLv2 5dfffe (93, 255, 254)
+        2: (93, 255, 254),
+        # rainLv3 00cbff (0, 203, 255)
+        4: (0, 203, 255),
+        # rainLv4 0098ff (0, 152, 255)
+        8: (0, 152, 255),
+
+        # snowLv1 f8b7c3 (248, 183, 195)
+        16: (248, 183, 195),
+        # snowLv2 f48fb8 (244, 143, 184)
+        24: (244, 143, 184),
+        # snowLv3 e25797 (226, 87, 151)
+        32: (226, 87, 151),
+        # snowLv4 cc2e7f (204, 46, 127)
+        40: (204, 46, 127),
     }
     ld = float('inf')
     mm = 0
@@ -169,6 +185,14 @@ def color2mm(rainsnow, r, g, b):
         if d < ld:
             ld = d
             mm = _mm
+    if rainsnow:
+        remap = {
+            16: 1,
+            24: 2,
+            32: 4,
+            40: 8,
+        }
+        mm = remap[mm]
     return mm
 
 
@@ -560,7 +584,8 @@ class taskTray:
 
         if not notified and (self.config[name]['rgb'] != rgb):
             # 通知しておらずデフォルトカラーと異なる (つまり降り始めた)
-            line = self.config[name].get('format_falling', '、雨みたい')
+            rainsnow = '雪' if self.config[name].get('rainsnow', False) else '雨'
+            line = self.config[name].get('format_falling', f'、{rainsnow}みたい')
             post_data['text'] = name + line
             # 通知済みにする
             self.config[name]['notified'] = True
