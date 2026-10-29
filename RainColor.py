@@ -192,7 +192,8 @@ def color2mm(rainsnow, r, g, b):
             32: 4,
             40: 8,
         }
-        mm = remap[mm]
+        if mm in remap:
+            mm = remap[mm]
     return mm
 
 
