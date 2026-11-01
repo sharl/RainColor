@@ -735,20 +735,21 @@ class taskTray:
 
         # set all lamp15 RGB segment
         lamp15_position = self.config[name].get('lamp15_position', 'all')
-        for lamp_ip in self.lamp15s:
-            lamp = self.lamp15s[lamp_ip]
-            left_rgb = lamp.left_rgb
-            right_rgb = lamp.right_rgb
-            if left_rgb == BLACK and right_rgb == BLACK:
-                lamp.rear_off()
-            else:
-                color_set = (left_rgb, right_rgb)
-                # print(lamp_ip, 'before', color_set, self.segment_colors[lamp_ip])
-                if self.segment_colors[lamp_ip] != color_set:
-                    self.segment_colors[lamp_ip] = color_set
-                    lamp.segments(left_rgb, right_rgb)
-                    print(lamp_ip, lamp.left_rgb, lamp.right_rgb)
-                # print(lamp_ip, 'after ', color_set, self.segment_colors[lamp_ip])
+        if lamp15_position != 'all':
+            for lamp_ip in self.lamp15s:
+                lamp = self.lamp15s[lamp_ip]
+                left_rgb = lamp.left_rgb
+                right_rgb = lamp.right_rgb
+                if left_rgb == BLACK and right_rgb == BLACK:
+                    lamp.rear_off()
+                else:
+                    color_set = (left_rgb, right_rgb)
+                    # print(lamp_ip, 'before', color_set, self.segment_colors[lamp_ip])
+                    if self.segment_colors[lamp_ip] != color_set:
+                        self.segment_colors[lamp_ip] = color_set
+                        lamp.segments(left_rgb, right_rgb)
+                        print(lamp_ip, lamp.left_rgb, lamp.right_rgb)
+                    # print(lamp_ip, 'after ', color_set, self.segment_colors[lamp_ip])
 
         # trim szTip
         SZTIP_MAX = 128
