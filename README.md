@@ -27,6 +27,11 @@ cd RainColor
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
+
+# COPY SAMPLE
+cp .config.sample .config
+# EDIT .config FOR YOUR ENVIRONMENT
+
 python RainColor.py
 ```
 
